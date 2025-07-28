@@ -8,28 +8,23 @@ import numpy as np
 from openai import OpenAI
 from dotenv import load_dotenv
 import streamlit as st
+from pathlib import Path
 
 load_dotenv(override = 'TRUE')
 api_key = os.getenv("OPENAI_API_KEY")
 
 st.set_page_config(page_title="Book QA", layout="wide")
-st.title("Ask Anything of Your Book")
+st.title("Choose a Book and Ask a Question")
 
 @st.cache_resource
 def load_vectordb(pdf_path: str, persist_dir: str):
     # 1) Read & clean PDF once
-    BAD = [
-        "do you feel frustrated",
-        "stuck or overwhelmed",
-        "free audio & video",
-        "think-and-grow-rich-ebook.com"
-    ]
     reader = PdfReader(pdf_path)
     raw_pages = []
     for page in reader.pages:
         text = page.extract_text() or ""
         lines = text.splitlines()
-        filtered = [L for L in lines if not any(b in L.lower() for b in BAD)]
+        filtered = lines
         raw_pages.append("\n".join(filtered))
 
     # # 2) Split per page with metadata
@@ -60,11 +55,34 @@ def load_vectordb(pdf_path: str, persist_dir: str):
 def get_llm():
     return OpenAI(api_key=api_key)
 
-# Initialize resources
-PDF_PATH    = "Think-And-Grow-Rich.pdf"
-PERSIST_DIR = "./faiss_book_index"
-vectordb    = load_vectordb(PDF_PATH, PERSIST_DIR)
-llm_client  = get_llm()
+# PDF selection/upload
+st.sidebar.header("Book Selection")
+uploads_dir = Path("uploads")
+# List all PDFs in project root and uploads directory
+existing_pdfs = [str(p) for p in Path(".").glob("*.pdf")]
+if uploads_dir.exists():
+    existing_pdfs += [str(p) for p in uploads_dir.glob("*.pdf")]
+# Remove duplicates while preserving order
+existing_pdfs = list(dict.fromkeys(existing_pdfs))
+
+upload = st.sidebar.file_uploader("Upload a PDF", type="pdf")
+if upload:
+    uploads_dir.mkdir(exist_ok=True)
+    save_path = uploads_dir / upload.name
+    with open(save_path, "wb") as f:
+        f.write(upload.getbuffer())
+    selected_pdf = str(save_path)
+    if selected_pdf not in existing_pdfs:
+        existing_pdfs.append(selected_pdf)
+else:
+    selected_pdf = st.sidebar.selectbox("Choose a PDF", existing_pdfs)
+
+# Use book-specific FAISS index folder
+book_stem = Path(selected_pdf).stem
+persist_dir = f"faiss_book_index_{book_stem}"
+vectordb = load_vectordb(selected_pdf, persist_dir)
+llm_client = get_llm()
+
 
 system_prompt = "You are a helpful assistant. Answer the question using ONLY the provided excerpts—quote verbatim and cite page numbers."
 
