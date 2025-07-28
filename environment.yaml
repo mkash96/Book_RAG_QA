@@ -1,0 +1,16 @@
+name: book-rag
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - streamlit
+  - python-dotenv
+  - pypdf2
+  - langchain
+  - faiss-cpu
+  - numpy
+  - pip
+  - pip:
+      - openai
+      - anthropic
