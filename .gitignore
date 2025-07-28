@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Environment
+.env
+
+# FAISS index & cache
+faiss_book_index/
+*.pkl
+
+# VSCode
+.vscode/
+
+# macOS
+.DS_Store
