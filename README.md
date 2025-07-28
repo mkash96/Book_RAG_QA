@@ -2,6 +2,9 @@
 
 A Streamlit-based Retrieval-Augmented Generation (RAG) app that lets you upload or select a PDF “book,” choose between multiple LLM backends (OpenAI, Anthropic, Ollama), and ask questions—quoting verbatim from the text and citing page numbers.
 
+## Demo & Screenshots
+See [docs/Demo.pdf](docs/Demo.pdf) for a UI walkthrough and model-comparison.
+
 ## Features
 
 - **PDF management**  
